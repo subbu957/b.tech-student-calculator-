@@ -1,0 +1,12 @@
+# Node.js dependencies
+node_modules/
+server/node_modules/
+
+# Local database
+server/database.json
+
+# Logs and system generated temp files
+*.log
+.system_generated/
+.tempmediaStorage/
+browser/

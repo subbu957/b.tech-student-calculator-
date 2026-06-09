@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Calculate B.Tech SGPA, CGPA, and overall percentage using our dynamic, responsive Student Calculator. Supports custom credits, custom course additions, and PDF exports.">
+    <title>B.Tech SGPA & CGPA Analyzer | Student Calculator</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Main Style sheet -->
+    <link rel="stylesheet" href="style.css">
+    <!-- HTML2PDF CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5IfS51RRXXC5yXOv38Lt0HzcGDgp/W/dOtGtTdkvc5J/0FhXWTRc37QCLkeyhnK36cHyvVy/A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body>
+    <div class="app-background-decor"></div>
+    <div class="app-container">
+        
+        <!-- Header Section -->
+        <header class="app-header">
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <div>
+                    <h1>Student Calculator</h1>
+                    <p class="subtitle">B.Tech SGPA & CGPA Analyzer</p>
+                </div>
+            </div>
+            
+            <div class="header-actions">
+                <!-- Storage Mode Selector -->
+                <div class="storage-selector" id="storageModeSelector">
+                    <button type="button" class="storage-btn active" data-mode="local" title="Save on this browser only">
+                        <i class="fa-solid fa-laptop"></i> <span>Local</span>
+                    </button>
+                    <button type="button" class="storage-btn" data-mode="cloud" title="Save to cloud server database">
+                        <i class="fa-solid fa-cloud"></i> <span>Cloud</span>
+                    </button>
+                </div>
+
+                <div id="connectionStatus" class="connection-status-badge offline" title="Backend Connection Status">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Local Mode</span>
+                </div>
+                <button id="themeToggle" class="theme-toggle-btn" aria-label="Toggle dark mode">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <main class="app-main">
+            <!-- Left Panel: Calculator Dashboard -->
+            <section class="calculator-panel">
+                <div class="panel-header">
+                    <i class="fa-solid fa-calculator text-primary"></i>
+                    <h2>Academic Score Entry</h2>
+                </div>
+                
+                <form id="calculatorForm" novalidate>
+                    <!-- Student Info -->
+                    <div class="input-group student-name-group">
+                        <label for="studentName">
+                            <i class="fa-solid fa-user"></i> Student Full Name
+                        </label>
+                        <input type="text" id="studentName" placeholder="Enter student's name" required autocomplete="off">
+                        <span class="error-msg" id="nameError">Student name is required.</span>
+                    </div>
+
+                    <!-- Semester Navigation Tabs -->
+                    <div class="tabs-container">
+                        <label class="section-sublabel"><i class="fa-solid fa-layer-group"></i> Select Semester</label>
+                        <div class="semester-tabs" id="semesterTabs">
+                            <!-- Injected by JS, 8 Semesters -->
+                            <button type="button" class="tab-btn active" data-sem="1">Sem 1</button>
+                            <button type="button" class="tab-btn" data-sem="2">Sem 2</button>
+                            <button type="button" class="tab-btn" data-sem="3">Sem 3</button>
+                            <button type="button" class="tab-btn" data-sem="4">Sem 4</button>
+                            <button type="button" class="tab-btn" data-sem="5">Sem 5</button>
+                            <button type="button" class="tab-btn" data-sem="6">Sem 6</button>
+                            <button type="button" class="tab-btn" data-sem="7">Sem 7</button>
+                            <button type="button" class="tab-btn" data-sem="8">Sem 8</button>
+                        </div>
+                    </div>
+
+                    <!-- Subject Rows Box -->
+                    <div class="courses-workspace">
+                        <div class="workspace-header">
+                            <h3>Courses in <span id="activeSemTitle">Semester 1</span></h3>
+                            <button type="button" id="addCourseBtn" class="btn-add-course-inline">
+                                <i class="fa-solid fa-plus"></i> Add Course
+                            </button>
+                        </div>
+
+                        <!-- Course List Container -->
+                        <div class="courses-list-header">
+                            <span class="col-name">Course Title</span>
+                            <span class="col-credits">Credits</span>
+                            <span class="col-marks">Grade Point (0-10)</span>
+                            <span class="col-grade">Grade</span>
+                            <span class="col-action"></span>
+                        </div>
+                        
+                        <div id="courseRowsContainer" class="course-rows-container">
+                            <!-- Course rows injected dynamically by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Form Trigger Button -->
+                    <div class="form-actions">
+                        <button type="button" id="resetBtn" class="btn btn-secondary">
+                            <i class="fa-solid fa-rotate-left"></i> Reset Calculator
+                        </button>
+                        <button type="submit" id="saveRecordBtn" class="btn btn-primary">
+                            <i class="fa-solid fa-floppy-disk"></i> Save Calculation
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Right Panel: Results viz & scorecard reports -->
+            <section class="results-panel">
+                <!-- Initial State: Prompts to input -->
+                <div id="resultsEmptyState" class="empty-state">
+                    <div class="animated-icon">
+                        <i class="fa-solid fa-award"></i>
+                    </div>
+                    <h3>Academic Analysis</h3>
+                    <p>Enter marks/credits for your courses. The SGPA, CGPA, and Percentage will calculate in real-time as you type!</p>
+                </div>
+
+                <!-- Scorecard Result Card -->
+                <div id="resultsContent" class="results-content hidden">
+                    <div id="pdfExportArea" class="pdf-export-area">
+                        <!-- Scorecard Header -->
+                        <div class="scorecard-header">
+                            <div class="scorecard-meta">
+                                <h3 id="resStudentName">John Doe</h3>
+                                <p class="report-timestamp"><i class="fa-regular fa-clock"></i> <span id="resDateTime">--/--/---- --:--:--</span></p>
+                            </div>
+                            <div id="resStatusBadge" class="status-badge pass">
+                                <span class="badge-icon"><i class="fa-solid fa-circle-check"></i></span>
+                                <span class="badge-text">FIRST CLASS</span>
+                            </div>
+                        </div>
+
+                        <!-- Circular Progress & Percentage callout -->
+                        <div class="scorecard-summary">
+                            <div class="progress-container">
+                                <svg class="progress-ring" width="160" height="160">
+                                    <circle class="progress-ring-bg" stroke-width="12" fill="transparent" r="70" cx="80" cy="80" />
+                                    <circle id="progressPercentCircle" class="progress-ring-bar" stroke-width="12" fill="transparent" r="70" cx="80" cy="80" />
+                                </svg>
+                                <div class="progress-text-overlay">
+                                    <span id="resCgpaText" class="percentage-val">0.00</span>
+                                    <span class="percentage-lbl">CGPA</span>
+                                </div>
+                            </div>
+                            
+                            <div class="grade-callout">
+                                <span class="grade-lbl">Overall %</span>
+                                <div id="resPercentageText" class="overall-pct-badge">0%</div>
+                                <p id="resAcademicStandText" class="grade-desc">Distinction standing</p>
+                            </div>
+                        </div>
+
+                        <!-- Semesters SGPA breakdown list -->
+                        <div class="semester-grades-breakdown">
+                            <h4>Semester Performance Summary</h4>
+                            <div class="sem-badge-list" id="semBadgeList">
+                                <!-- Cards injected by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Key Academic stats summary grid -->
+                        <div class="stats-grid">
+                            <div class="stat-card" style="grid-column: span 2;">
+                                <span class="stat-title">Total Credits Earned</span>
+                                <span id="resTotalCredits" class="stat-val">0 / 0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PDF triggers -->
+                    <div class="result-actions">
+                        <button type="button" id="downloadPdfBtn" class="btn btn-download">
+                            <i class="fa-solid fa-file-pdf"></i> Save Academic Report
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Calculations History Dashboard -->
+        <section class="history-panel">
+            <div class="history-header">
+                <div class="title-with-count">
+                    <i class="fa-solid fa-clock-rotate-left text-accent"></i>
+                    <h2>Calculations History</h2>
+                    <span id="historyCount" class="count-badge">0</span>
+                </div>
+                <button type="button" id="clearHistoryBtn" class="btn-clear-history hidden">
+                    <i class="fa-solid fa-trash-can"></i> Clear History
+                </button>
+            </div>
+            
+            <div id="historyEmptyState" class="history-empty">
+                <p>No calculations saved yet. Calculations will automatically store in local history here.</p>
+            </div>
+            
+            <div id="historyList" class="history-list-container hidden">
+                <!-- Cards injected via JavaScript -->
+            </div>
+        </section>
+        
+        <!-- Premium Footer -->
+        <footer class="app-footer">
+            <p>&copy; 2026 Student Calculator. Built with precision by <strong style="color: var(--primary);">bvssubbu</strong>.</p>
+        </footer>
+    </div>
+
+    <!-- Script Entrypoint -->
+    <script src="script.js"></script>
+</body>
+</html>
