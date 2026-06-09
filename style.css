@@ -1292,3 +1292,21 @@ html[data-theme="dark"] .storage-btn.active {
     background-color: var(--primary-light);
     color: var(--primary);
 }
+
+/* Dashboard Navigation Badge Button */
+.connection-status-badge.dashboard-btn {
+    background-color: var(--primary-light);
+    color: var(--primary);
+    border-color: rgba(59, 130, 246, 0.2);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.connection-status-badge.dashboard-btn:hover {
+    background-color: var(--primary);
+    color: #ffffff;
+    border-color: transparent;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px var(--shadow-glow);
+}
+

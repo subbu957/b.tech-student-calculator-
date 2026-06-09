@@ -578,7 +578,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- History Database Engine ---
-    const BACKEND_URL = `http://${window.location.hostname}:5000/api`;
+    // Change this to your live Vercel URL once deployed (e.g., https://your-app.vercel.app)
+    const VERCEL_BACKEND_URL = '';
+
+    // Determine the backend base path dynamically
+    let BACKEND_BASE = '';
+    if (window.location.hostname.includes('github.io')) {
+        BACKEND_BASE = VERCEL_BACKEND_URL || `http://${window.location.hostname}:5000`;
+    } else if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.')) {
+        BACKEND_BASE = `http://${window.location.hostname}:5000`;
+    } else {
+        // Same domain routing (e.g. when loaded directly from Vercel)
+        BACKEND_BASE = '';
+    }
+
+    const BACKEND_URL = BACKEND_BASE ? `${BACKEND_BASE}/api` : '/api';
+    const DASHBOARD_URL = BACKEND_BASE ? `${BACKEND_BASE}/dashboard` : '/dashboard';
     let isServerOnline = false;
 
     function getLocalHistory() {
@@ -588,24 +603,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateConnectionBadge(online) {
         const connectionBadge = document.getElementById('connectionStatus');
-        if (!connectionBadge) return;
-        if (online) {
-            connectionBadge.className = 'connection-status-badge online';
-            connectionBadge.querySelector('.status-text').textContent = 'Cloud Synced';
-        } else {
-            connectionBadge.className = 'connection-status-badge offline';
-            connectionBadge.querySelector('.status-text').textContent = 'Local Mode';
+        const dashboardBtn = document.getElementById('dashboardLink');
+        
+        if (connectionBadge) {
+            if (online) {
+                connectionBadge.className = 'connection-status-badge online';
+                connectionBadge.querySelector('.status-text').textContent = 'Cloud Synced';
+            } else {
+                connectionBadge.className = 'connection-status-badge offline';
+                connectionBadge.querySelector('.status-text').textContent = 'Local Mode';
+            }
+        }
+        
+        if (dashboardBtn) {
+            if (online && activeStorageMode === 'cloud') {
+                dashboardBtn.href = DASHBOARD_URL;
+                dashboardBtn.classList.remove('hidden');
+            } else {
+                dashboardBtn.classList.add('hidden');
+            }
         }
     }
 
     async function loadCalculationsHistory() {
         if (activeStorageMode === 'local') {
             updateConnectionBadge(false);
-            const badge = document.getElementById('connectionStatus');
-            if (badge) {
-                badge.className = 'connection-status-badge offline';
-                badge.querySelector('.status-text').textContent = 'Local Mode';
-            }
             renderCalculationsHistory(getLocalHistory());
             return;
         }

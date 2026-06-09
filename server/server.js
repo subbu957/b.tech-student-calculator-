@@ -10,17 +10,26 @@ const path = require('path');
 
 const app = express();
 const PORT = 5000;
-const DB_PATH = path.join(__dirname, 'database.json');
+const DB_PATH = process.env.VERCEL ? '/tmp/database.json' : path.join(__dirname, 'database.json');
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
+// Serve calculator frontend statically
+app.use('/calculator', express.static(path.join(__dirname, '../')));
+
 // Helper function to read from JSON database
 function readDatabase() {
     try {
         if (!fs.existsSync(DB_PATH)) {
-            // Initialize with an empty array if database.json doesn't exist
+            // Seed from server/database.json if running on Vercel and file doesn't exist in /tmp
+            const seedPath = path.join(__dirname, 'database.json');
+            if (process.env.VERCEL && fs.existsSync(seedPath)) {
+                const seedData = fs.readFileSync(seedPath, 'utf-8');
+                fs.writeFileSync(DB_PATH, seedData, 'utf-8');
+                return JSON.parse(seedData || '[]');
+            }
             fs.writeFileSync(DB_PATH, JSON.stringify([], null, 2), 'utf-8');
             return [];
         }
@@ -122,9 +131,11 @@ app.post('/api/clear', (req, res) => {
     }
 });
 
-// Serve a beautiful database dashboard table at root
-app.get('/', (req, res) => {
+// Serve a beautiful database dashboard table at root and /dashboard
+app.get(['/', '/dashboard'], (req, res) => {
     const history = readDatabase();
+    // Dynamic calculator link depending on Vercel deployment vs local
+    const calculatorUrl = process.env.VERCEL ? '/' : '/calculator/';
     
     // Helper function to calculate semester SGPA
     function getSemSGPA(courses) {
@@ -535,7 +546,7 @@ app.get('/', (req, res) => {
             </div>
             <div style="display: flex; gap: 1rem; align-items: center;">
                 <button onclick="clearAllHistory()" class="clear-btn"><i class="fa-solid fa-trash-can"></i> Clear Database</button>
-                <a href="http://localhost:8000" class="btn-home"><i class="fa-solid fa-calculator"></i> Open Calculator</a>
+                <a href="${calculatorUrl}" class="btn-home"><i class="fa-solid fa-calculator"></i> Open Calculator</a>
             </div>
         </header>
 
@@ -585,6 +596,6 @@ app.get('/', (req, res) => {
 });
 
 // Start Server
-app.listen(PORT, () => {
-    console.log(`Student Calculator Server listening on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Student Calculator Server listening on http://0.0.0.0:${PORT}`);
 });
